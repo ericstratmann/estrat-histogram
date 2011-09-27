@@ -1,43 +1,38 @@
 import Data.Char
 import Data.List
+import qualified Data.ByteString.Char8 as BS
 
 main :: IO ()
 main = do
-       contents <- getContents
-       let wordsList = getWords contents
+       contents <- BS.getContents
+       let wordsList = BS.splitWith notWord contents
        let sorted = sort wordsList
        let count = getCount sorted
        let histogram = wordCountToHistogram count
-       putStrLn histogram
+       BS.putStrLn (BS.unlines histogram)
+
+notWord :: Char -> Bool
+notWord c = BS.elem c (BS.pack "?.,/;!")
 
 
-wordCountToHistogram :: [(String, Integer)] -> String
+wordCountToHistogram :: [(BS.ByteString, Integer)] -> [BS.ByteString]
 wordCountToHistogram count = histogram where
     sorted = sortBy sortPair count
-    histogram = unlines $ map toHistogramLine sorted
+    histogram =  map toHistogramLine sorted
         
-toHistogramLine :: (String, Integer) -> String
-toHistogramLine (word, c) =  word ++ ": " ++ take (fromIntegral c) (repeat 'x')
+toHistogramLine :: (BS.ByteString, Integer) -> BS.ByteString
+toHistogramLine (word, c) =  word -- ++ ": " ++ take (fromIntegral c) (repeat 'x')
 
-sortPair :: (String, Integer) -> (String, Integer) -> Ordering
+sortPair :: (BS.ByteString, Integer) -> (BS.ByteString, Integer) -> Ordering
 sortPair (_,a) (_,b) | a < b = LT
                      | a > b = GT
                      | otherwise = EQ
 
-getCount :: [String] -> [(String, Integer)]
+getCount :: [BS.ByteString] -> [(BS.ByteString, Integer)]
 getCount = getCount' [] 1 where 
     getCount' acc c [w] = (w,c) : acc
     getCount' acc c (w:w':ws) | w == w' = getCount' acc (c+1) (w':ws)
                               | otherwise = getCount' ((w,c):acc) 1 (w':ws)
     getCount' _ _ _ = []
 
-
--- modified `words' from prelude
-getWords :: String -> [String]
-getWords s =  case dropWhile isWordSep s of
-    "" -> []
-    s' -> w : getWords s''
-        where (w, s'') = break isWordSep s'
-
-isWordSep :: Char -> Bool
 isWordSep c = isPunctuation c || isSpace c
