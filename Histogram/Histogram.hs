@@ -20,11 +20,18 @@ format str maxLen
 
 wordCountToHistogram :: [(BS.ByteString, Int)] -> [BS.ByteString]
 wordCountToHistogram count = histogram where
-    sorted = sortBy sortPair count
-    maxLen = min (BS.length $ fst $ maximumBy wordLen count) 15
+    sorted = sortBy sortPair (dropEmpty count)
+    maxWordLen = min (BS.length $ fst $ maximumBy wordLen count) 15
+    maxHistogramLen = snd $ last sorted
     histogram =  map toHistogramLine sorted where
         toHistogramLine (word, c) =
-            BS.concat [(format word maxLen), BS.pack(": "), BS.replicate c 'x']
+            BS.concat [(format word maxWordLen), BS.pack(": "), BS.replicate histoLen 'x']
+                where histoLen = max (div (60 * c) maxHistogramLen) 1
+
+dropEmpty :: [(BS.ByteString, Int)] -> [(BS.ByteString, Int)]
+dropEmpty (x:xs) | BS.length (fst x) == 0 = xs
+                 | otherwise = x : dropEmpty xs
+dropEmpty _ = []
         
 
 wordLen :: (BS.ByteString, Int) -> (BS.ByteString, Int) -> Ordering
