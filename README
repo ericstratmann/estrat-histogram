@@ -1,0 +1,11 @@
+Histogram generates ASCII histograms based on word frequency. Its author is Eric Stratmann (estrat).
+You can build Histogram using cabal.
+
+$ cabal install
+
+Histogram accepts text from standard input and outputs a histogram to standard output.
+
+$ histogram < textfile
+cat: xxxx
+dog: xxxxxxx
+ape: xxxxxxxxxxxxx
