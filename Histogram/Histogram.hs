@@ -3,68 +3,76 @@ import Data.Char
 import qualified Data.Trie as Trie
 import Control.Monad
 import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Char8 as LBS
 
 nonWordChars = "\n ?.,/:;!@#$1234567890()-_=+[]{}|\\\t"
 maxWidth = 80
-maxWordLength = 15
+maxcompareWordLength = 15
 histogramChar = 'x'
 
 main :: IO ()
 main = do
-       contents <- {-# SCC "getcontents" #-} BS.getContents
-       let lower = {-# SCC "toLower" #-} BS.map toLower contents
-       let wordsList = {-# SCC "split" #-} BS.splitWith notWord lower
---       let sorted = {-# SCC "sort" #-} sort wordsList
---       let wordsCount = {-# SCC "getCount" #-} getCount sorted
-       let trie = {-# SCC "buildtree" #-} buildTrie wordsList
+       contents <- {-# SCC "getContents" #-} LBS.getContents
+       let lower = {-# SCC "toLower" #-} LBS.map toLower contents
+       let wordsList = {-# SCC "split" #-} LBS.splitWith notWord lower
+       let trie = {-# SCC "buildtrie" #-} buildTrie wordsList
        let wordsCount = {-# SCC "trieToList" #-} Trie.toList trie
-       let histogram = {-# SCC "tohisto" #-} wordCountToHistogram wordsCount
+       let histogram = {-# SCC "toHistogram" #-} wordCountToHistogram wordsCount
        BS.putStrLn (BS.unlines histogram)
 
-buildTrie :: [BS.ByteString] -> Trie.Trie Int
+--       let sorted = {-# SCC "sort" #-} sort wordsList
+--       let wordsCount = {-# SCC "getCount" #-} getCount sorted
+
+buildTrie :: [LBS.ByteString] -> Trie.Trie Int
 buildTrie = foldl' insertTrie Trie.empty
 
-insertTrie :: Trie.Trie Int -> BS.ByteString -> Trie.Trie Int
-insertTrie trie val = case Trie.lookup val trie of
-                    Just i -> Trie.insert val (i + 1) trie
-                    Nothing -> Trie.insert val 1 trie
+insertTrie :: Trie.Trie Int -> LBS.ByteString -> Trie.Trie Int
+insertTrie trie val =
+     let strictVal = safeGet $ LBS.toChunks val in
+         case Trie.lookup strictVal trie of
+            Just i -> Trie.insert strictVal (i + 1) trie
+            Nothing -> Trie.insert strictVal 1 trie
 
+safeGet :: [BS.ByteString] -> BS.ByteString
+safeGet [x] = x
+safeGet _ = BS.empty
 
 notWord :: Char -> Bool
-notWord c = BS.elem c (BS.pack nonWordChars)
+notWord c = BS.elem c nonWordCharsBS
+nonWordCharsBS = BS.pack nonWordChars
 
 format :: BS.ByteString -> Int -> BS.ByteString
 format str maxLen 
-    | BS.length str > maxLen = BS.concat [BS.take (maxLen - BS.length dots) str, dots]
-    | otherwise = BS.concat [BS.replicate (maxLen - BS.length str) ' ', str]
+    | bslen str > maxLen = BS.concat [bstake (maxLen - bslen dots) str, dots]
+    | otherwise = BS.concat [bsreplicate (maxLen - bslen str) ' ', str]
         where dots = BS.pack ".." 
+
 
 wordCountToHistogram :: [(BS.ByteString, Int)] -> [BS.ByteString]
 wordCountToHistogram count = histogram where
-    sorted = sortBy sortPair (dropEmpty count)
-    maxWordLen = min (BS.length . fst $ maximumBy wordLen count) maxWordLength
+    sorted = sortBy compareFreqLen (dropEmpty count)
+    maxcompareWordLen = min (bslen . fst $ maximumBy compareWordLen count) maxcompareWordLength
     maxHistogramLen = snd $ last sorted
     histogram =  fmap toHistogramLine sorted
-    toHistogramLine (word, c) = BS.concat [format word maxWordLen, BS.pack ": " , BS.replicate histoLen histogramChar] where
+    toHistogramLine (word, c) = BS.concat [format word maxcompareWordLen, BS.pack ": " , bsreplicate histoLen histogramChar] where
         histoLen = max (div (maxHistoLen * c) maxHistogramLen) 1
-    maxHistoLen = maxWidth - maxWordLen - 2
+    maxHistoLen = maxWidth - maxcompareWordLen - 2
 
 dropEmpty :: [(BS.ByteString, Int)] -> [(BS.ByteString, Int)]
-dropEmpty (x:xs) | BS.length (fst x) == 0 = xs
+dropEmpty (x:xs) | bslen (fst x) == 0 = xs
                  | otherwise = x : dropEmpty xs
 dropEmpty x = x
         
+compareWordLen :: (BS.ByteString, Int) -> (BS.ByteString, Int) -> Ordering
+compareWordLen (a,_) (b,_) | diff < 0 = LT
+                           | diff > 0 = GT
+                           | otherwise = EQ
+                               where diff = bslen a - bslen b
 
-wordLen :: (BS.ByteString, Int) -> (BS.ByteString, Int) -> Ordering
-wordLen (a,_) (b,_) | diff < 0 = LT
-                   | diff > 0 = GT
-                   | otherwise = EQ
-                   where diff = BS.length a - BS.length b
-
-sortPair :: (BS.ByteString, Int) -> (BS.ByteString, Int) -> Ordering
-sortPair (_,a) (_,b) | a < b = LT
-                     | a > b = GT
-                     | otherwise = EQ
+compareFreqLen :: (BS.ByteString, Int) -> (BS.ByteString, Int) -> Ordering
+compareFreqLen (_,a) (_,b) | a < b = LT
+                           | a > b = GT
+                           | otherwise = EQ
 
 getCount :: [BS.ByteString] -> [(BS.ByteString, Int)]
 getCount = getCount' [] 1 where 
@@ -72,3 +80,7 @@ getCount = getCount' [] 1 where
     getCount' acc c (w:w':ws) | w == w' = getCount' acc (c+1) (w':ws)
                               | otherwise = getCount' ((w,c):acc) 1 (w':ws)
     getCount' _ _ _ = []
+
+bslen bs = fromIntegral (BS.length bs)
+bsreplicate c bs = BS.replicate (fromIntegral c) bs
+bstake c bs =  BS.take (fromIntegral c) bs
