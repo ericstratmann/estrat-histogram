@@ -19,8 +19,8 @@ main = do
     input <- readInput
     let lower = fmap toLower input
     let wordsList = getWords lower
-    let mapo = buildMap wordsList
-    let wordsCount = toList mapo
+    let wordMap = buildMap wordsList
+    let wordsCount = toList wordMap
     let histogram = wordCountToHistogram wordsCount
     putStrLn (unlines histogram)
 
@@ -41,12 +41,12 @@ buildMap = foldl' insertMap empty
 
 -- Updates the word count in the map for the given word.
 insertMap :: Map String Int -> String -> Map String Int
-insertMap map val = alter updateVal val map
+insertMap wordMap word = alter incrementMaybe word wordMap
 
 -- Updates a Maybe to increment the word count by 1.
-updateVal :: Maybe Int -> Maybe Int
-updateVal (Just i) = Just (i+1)
-updateVal Nothing = Just 1
+incrementMaybe :: Maybe Int -> Maybe Int
+incrementMaybe (Just i) = Just (i+1)
+incrementMaybe Nothing = Just 1
 
 -- Given a list of (word, count) pairs, returns a list of strings that output
 -- a histogram when printed.
@@ -55,9 +55,9 @@ wordCountToHistogram wordCount = convertToASCII sortedWordLen maxWordLen where
     sortedWordCount = sortBy compareFreqLen wordCount
     maxWordLen = getMaxWordLen sortedWordCount
     maxWordFreq = getMaxWordFreq sortedWordCount
-    sortedWordLen = Data.List.filter notEmptyLine $ fmap histoLen sortedWordCount
-    histoLen (word, len) = (word ,div (maxHistogramLen * len) maxWordFreq)
-    maxHistogramLen = maxWidth - maxWordLen - 1
+    sortedWordLen = Data.List.filter notEmptyLine $ fmap countToLen sortedWordCount
+    countToLen (word, len) = (word, div (maxHistogramLen * len) maxWordFreq)
+    maxHistogramLen = maxWidth - maxWordLen - 1 -- 1 is for the space (" ")
 
 -- Returns whether the histogram line would not be empty when printed
 notEmptyLine :: (String, Int) -> Bool
@@ -104,6 +104,6 @@ getWords s
       (w, s'') = break isDelim findSpace
       findSpace = dropWhile isDelim s
 
--- Returns whether is a delimiter character that separates words
+-- Returns whether character is a delimiter character that separates words
 isDelim :: Char -> Bool
-isDelim s = s /= '\'' && (isPunctuation s || isSpace s)
+isDelim c = c /= '\'' && (isPunctuation c || isSpace c)
