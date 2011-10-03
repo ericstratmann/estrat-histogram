@@ -1,7 +1,7 @@
 import System.Environment
 import Data.List
 import Data.Char
-import qualified Data.Map as Trie
+import qualified Data.Map as Map
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
 
@@ -22,8 +22,8 @@ main = do
     input <- readInput
     let lower = {-# SCC "toLower" #-} LBS.map toLower input
     let wordsList = {-# SCC "split" #-} LBS.splitWith notWord lower
-    let trie = {-# SCC "buildtrie" #-} buildTrie wordsList
-    let wordsCount = {-# SCC "trieToList" #-} Trie.toList trie
+    let map = {-# SCC "buildMap" #-} buildMap wordsList
+    let wordsCount = {-# SCC "MapToList" #-} Map.toList map
     let histogram = {-# SCC "toHistogram" #-} wordCountToHistogram wordsCount
     BS.putStrLn (BS.unlines histogram)
 
@@ -37,13 +37,13 @@ readInput = do
             fileData <- mapM LBS.readFile args
             return $ LBS.concat fileData
 
-buildTrie :: [LBS.ByteString] -> Trie.Map BS.ByteString Int
-buildTrie = foldl' insertTrie Trie.empty
+buildMap :: [LBS.ByteString] -> Map.Map BS.ByteString Int
+buildMap = foldl' insertMap Map.empty
 
-insertTrie :: Trie.Map BS.ByteString Int -> LBS.ByteString -> Trie.Map BS.ByteString Int
-insertTrie trie val =
+insertMap :: Map.Map BS.ByteString Int -> LBS.ByteString -> Map.Map BS.ByteString Int
+insertMap map val =
      let strictVal = safeGet $ LBS.toChunks val in
-        Trie.alter updateVal strictVal trie
+        Map.alter updateVal strictVal map
 
 updateVal :: Maybe Int -> Maybe Int
 updateVal (Just i) = Just (i+1)
