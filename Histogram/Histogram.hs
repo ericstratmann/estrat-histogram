@@ -106,4 +106,4 @@ getWords s
 
 -- Returns whether is a delimiter character that separates words
 isDelim :: Char -> Bool
-isDelim s = isPunctuation s || isSpace s
+isDelim s = s /= '\'' && (isPunctuation s || isSpace s)
