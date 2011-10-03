@@ -1,7 +1,7 @@
 import System.Environment
 import Data.List
 import Data.Char
-import qualified Data.Map as Map
+import Data.Map
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
 
@@ -23,7 +23,7 @@ main = do
     let lower = {-# SCC "toLower" #-} LBS.map toLower input
     let wordsList = {-# SCC "split" #-} LBS.splitWith notWord lower
     let map = {-# SCC "buildMap" #-} buildMap wordsList
-    let wordsCount = {-# SCC "MapToList" #-} Map.toList map
+    let wordsCount = {-# SCC "MapToList" #-} toList map
     let histogram = {-# SCC "toHistogram" #-} wordCountToHistogram wordsCount
     BS.putStrLn (BS.unlines histogram)
 
@@ -37,13 +37,13 @@ readInput = do
             fileData <- mapM LBS.readFile args
             return $ LBS.concat fileData
 
-buildMap :: [LBS.ByteString] -> Map.Map BS.ByteString Int
-buildMap = foldl' insertMap Map.empty
+buildMap :: [LBS.ByteString] -> Map BS.ByteString Int
+buildMap = foldl' insertMap empty
 
-insertMap :: Map.Map BS.ByteString Int -> LBS.ByteString -> Map.Map BS.ByteString Int
+insertMap :: Map BS.ByteString Int -> LBS.ByteString -> Map BS.ByteString Int
 insertMap map val =
      let strictVal = safeGet $ LBS.toChunks val in
-        Map.alter updateVal strictVal map
+        alter updateVal strictVal map
 
 updateVal :: Maybe Int -> Maybe Int
 updateVal (Just i) = Just (i+1)
