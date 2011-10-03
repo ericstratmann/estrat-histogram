@@ -1,3 +1,4 @@
+import System.Environment
 import Data.List
 import Data.Char
 import qualified Data.Map as Trie
@@ -18,14 +19,23 @@ histogramChar = '#'
 
 main :: IO ()
 main = do
-       args <- getArgs
-       contents <- {-# SCC "getContents" #-} LBS.getContents
-       let lower = {-# SCC "toLower" #-} LBS.map toLower contents
-       let wordsList = {-# SCC "split" #-} LBS.splitWith notWord lower
-       let trie = {-# SCC "buildtrie" #-} buildTrie wordsList
-       let wordsCount = {-# SCC "trieToList" #-} Trie.toList trie
-       let histogram = {-# SCC "toHistogram" #-} wordCountToHistogram wordsCount
-       BS.putStrLn (BS.unlines histogram)
+    input <- readInput
+    let lower = {-# SCC "toLower" #-} LBS.map toLower input
+    let wordsList = {-# SCC "split" #-} LBS.splitWith notWord lower
+    let trie = {-# SCC "buildtrie" #-} buildTrie wordsList
+    let wordsCount = {-# SCC "trieToList" #-} Trie.toList trie
+    let histogram = {-# SCC "toHistogram" #-} wordCountToHistogram wordsCount
+    BS.putStrLn (BS.unlines histogram)
+
+readInput :: IO (LBS.ByteString)
+readInput = do
+    args <- getArgs
+    if length args == 0
+        then 
+            LBS.getContents
+        else do
+            fileData <- mapM LBS.readFile args
+            return $ LBS.concat fileData
 
 buildTrie :: [LBS.ByteString] -> Trie.Map BS.ByteString Int
 buildTrie = foldl' insertTrie Trie.empty
