@@ -1,0 +1,12 @@
+name:  estrat-histogram
+version: 0.1
+author: Eric Stratmann
+Synopsis: Generates ASCII histograms based on word frequency
+cabal-version: >= 1.2
+build-type: Simple
+
+Executable estrat-histogram
+  Main-Is: estrat-histogram.hs
+  build-depends:  base, containers
+  Hs-Source-Dirs: estrat-histogram
+  ghc-options: -Wall -O2
