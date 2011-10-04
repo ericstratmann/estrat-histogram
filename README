@@ -6,12 +6,12 @@ $ cabal install
 estrat-histogram accepts text from files passed in as arguments or from
 standard input and outputs a histogram to standard output.
 
-$ histogram textfile1 textfile2
+$ estrat-histogram textfile1 textfile2
 foo: ########
 bar: ####
 baz: ##
 
-$ histogram < textfile
+$ estrat-histogram < textfile
 ape: #############
 dog: #######
 cat: ####
