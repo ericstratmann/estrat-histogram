@@ -62,7 +62,7 @@ wordCountToHistogram wordCount = convertToASCII sortedWordLen maxWordLen where
 
 -- Returns whether the histogram line would not be empty when printed
 notEmptyLine :: (String, Int) -> Bool
-notEmptyLine (word, len) = len > 0
+notEmptyLine (_, len) = len > 0
 
 -- Returns the length of the longest word to display
 getMaxWordLen :: [(String, Int)] -> Int
