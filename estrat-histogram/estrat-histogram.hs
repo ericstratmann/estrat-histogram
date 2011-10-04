@@ -58,7 +58,7 @@ wordCountToHistogram wordCount = convertToASCII sortedWordLen maxWordLen where
     maxWordFreq = getMaxWordFreq sortedWordCount
     sortedWordLen = Data.List.filter notEmptyLine $ fmap countToLen sortedWordCount
     countToLen (word, len) = (word, div (maxHistogramLen * len) maxWordFreq)
-    maxHistogramLen = maxWidth - maxWordLen - 1 -- 1 is for the space (" ")
+    maxHistogramLen = maxWidth - maxWordLen - 2
 
 -- Returns whether the histogram line would not be empty when printed
 notEmptyLine :: (String, Int) -> Bool
@@ -86,6 +86,7 @@ format str maxLen
         
 -- Returns a list of all words in the string. Adapted from `words' in the
 -- Haskell Standard Prelude.
+getWords :: String -> [String]
 getWords s
   | findSpace == [] = []
   | otherwise = w : getWords s'' where
