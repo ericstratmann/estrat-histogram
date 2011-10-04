@@ -2,6 +2,7 @@ import System.Environment
 import Data.List
 import Data.Char
 import Data.Map
+import Data.Ord
 
 -- This program outputs an ASCII histogram based on word frequncy
 
@@ -52,7 +53,7 @@ incrementMaybe Nothing = Just 1
 -- a histogram when printed.
 wordCountToHistogram :: [(String, Int)] -> [String]
 wordCountToHistogram wordCount = convertToASCII sortedWordLen maxWordLen where
-    sortedWordCount = sortBy compareFreqLen wordCount
+    sortedWordCount = reverse $ sortBy (comparing snd) wordCount
     maxWordLen = getMaxWordLen sortedWordCount
     maxWordFreq = getMaxWordFreq sortedWordCount
     sortedWordLen = Data.List.filter notEmptyLine $ fmap countToLen sortedWordCount
@@ -63,9 +64,9 @@ wordCountToHistogram wordCount = convertToASCII sortedWordLen maxWordLen where
 notEmptyLine :: (String, Int) -> Bool
 notEmptyLine (word, len) = len > 0
 
--- Returns the length of the longest word
+-- Returns the length of the longest word to display
 getMaxWordLen :: [(String, Int)] -> Int
-getMaxWordLen sorted  = min (length . fst $ maximumBy compareWordLen sorted) maxWordLength
+getMaxWordLen sorted  = min (length . fst $ maximumBy (comparing (length . fst)) sorted) maxWordLength
 
 -- Returns the largest word count in a list that is sorted max first
 getMaxWordFreq :: [(String, Int)] -> Int
@@ -74,7 +75,7 @@ getMaxWordFreq = snd . head
 -- Generates ASCII text for each (word, len) pair
 convertToASCII :: [(String, Int)] -> Int -> [String]
 convertToASCII wordLens maxWordLen = fmap toHistogramLine wordLens where
-    toHistogramLine (word, len) = concat [format word maxWordLen, " " , replicate len histogramChar]
+    toHistogramLine (word, len) = format word maxWordLen ++ " " ++ replicate len histogramChar
  
 -- Formats a word so that it will print nicely
 format :: String -> Int -> String
@@ -83,19 +84,6 @@ format str maxLen
     | otherwise = str ++ replicate (maxLen - length str) ' '
         where dots = ".." 
         
--- Sorts (word, count) pairs by shortest word first
-compareWordLen :: (String, Int) -> (String, Int) -> Ordering
-compareWordLen (a,_) (b,_) | diff < 0 = LT
-                           | diff > 0 = GT
-                           | otherwise = EQ
-                               where diff = length a - length b
-
--- Sorts (word, count) pairs by largest frequency first
-compareFreqLen :: (String, Int) -> (String, Int) -> Ordering
-compareFreqLen (_,a) (_,b) | a > b = LT
-                           | a < b = GT
-                           | otherwise = EQ
-
 -- Returns a list of all words in the string. Adapted from `words' in the
 -- Haskell Standard Prelude.
 getWords s
